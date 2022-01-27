@@ -5,7 +5,7 @@ const errorHandler = require("../../controllers/error/error");
 
 const kafka = new Kafka({
   clientId: "kafka_start",
-  brokers: ["192.168.1.2:9092"],
+  brokers: ["192.168.0.16:9092"],
 });
 
 const consumer = kafka.consumer({
@@ -27,9 +27,9 @@ async function createConsumerTemperature() {
         const { id, sensor_data, time_stamp } = JSON.parse(
           message.value.toString()
         );
-        let read_at = await converter(time_stamp);
-        await temperatureLogger(1, 1, id, sensor_data, read_at);
-        console.log(JSON.parse(message.value.toString()));
+        
+        await temperatureLogger(1, 1, id, sensor_data, converter(time_stamp));
+        
       },
     });
   } catch (error) {

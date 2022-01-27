@@ -1,23 +1,19 @@
 const { Kafka } = require("kafkajs");
-const errorHandler = require("../error/error");
 const converter = require("../../middleware/timeConverter");
+const errorHandler = require("../../controllers/error/error");
 
 const kafka = new Kafka({
   clientId: "kafka_start",
-  brokers: ["192.168.1.2:9092"],
+  brokers: ["192.168.0.16:9092"],
 });
 
 const producer = kafka.producer();
-const consumer = kafka.consumer({
-  groupId: "consumer_group_start",
-});
 
 let incomingMessage = "";
 let is_producer_conn = false;
-let is_consumer_conn = false;
-const TEST_WITH_CONSUMER = false;
 
-async function createProducer(data) {
+
+async function createProducerAir(data) {
   try {
     if (!is_producer_conn) {
       console.log("Producer is  connecting...");
@@ -41,7 +37,7 @@ async function createProducer(data) {
       pwd: "./app/controllers/producer/producer.js",
       topic: "Air-sensor",
       req_path: "/air",
-      err_func: "createProducer",
+      err_func: "createProducerAir",
       content_err: error,
       created_at: converter(Date.now())
     };
@@ -49,66 +45,52 @@ async function createProducer(data) {
   }
 }
 
-async function createConsumer() {
-  try {
-    if (!is_consumer_conn) {
-      console.log("Consumer is  connecting...");
-      await consumer.connect();
-      console.log("Consumer connect successful!");
-      await consumer.subscribe({
-        topic: "Air-sensor",
-        fromBeginning: true,
-      });
-      await consumer.run({
-        eachMessage: async (result) => {
-          incomingMessage = `msg -> ${result.message.value}, par -> ${result.partition}`;
-          console.log(incomingMessage);
-        },
-      });
-      is_consumer_conn = true;
-    }
-  } catch (error) {
-    console.log("[ERROR] : ", error);
-    const errData = {
-      pwd: "./app/controllers/producer/producer.js",
-      topic: "Air-sensor",
-      req_path: "/air",
-      err_func: "createConsumer",
-      content_err: error,
-      created_at: converter(Date.now())
-    };
-    errorHandler(errData);
-  }
-}
-
-createProducer();
-if (TEST_WITH_CONSUMER) createConsumer();
+createProducerAir();
 
 const airDataGet = async (req, res) => {
-  await createProducer("-> ").then(async () => {
-    if (TEST_WITH_CONSUMER) {
-      await createConsumer().then(() => {
-        res.send(JSON.stringify(incomingMessage));
-      });
+  await createProducerAir("-> ").then(async () => {
+    try {
+      res.send(JSON.stringify(incomingMessage));
+    } catch (error) {
+      console.log("[ERROR] : ", error);
+      const errData = {
+        pwd: "./app/controllers/producer/producer.js",
+        topic: "Air-sensor",
+        req_path: "/air",
+        err_func: "airDataGet",
+        content_err: error,
+        created_at: converter(Date.now())
+      };
+      errorHandler(errData);
     }
   });
   res.end();
 };
 
 const airDataPost = async (req, res) => {
-  const obj = req.body;
-  if (!obj) {
-    console.log("400 -> Bad request");
-  }
-  console.log("Temp-Data -> ", obj);
-  await createProducer(obj).then(async (data) => {
-    if (TEST_WITH_CONSUMER) {
-      await createConsumer().then(() => {
+  try {
+    const obj = req.body;
+    if (!obj) {
+      console.log("400 -> Bad request");
+    } else {
+      console.log("Temp-Data -> ", obj);
+      await createProducerAir(obj).then(async () => {
         res.send(JSON.stringify(incomingMessage));
       });
     }
-  });
-  res.end();
+    res.end();
+  } catch (error) {
+    console.log("[ERROR] : ", error);
+    const errData = {
+      pwd: "./app/controllers/producer/producer.js",
+      topic: "Air-sensor",
+      req_path: "/air",
+      err_func: "airDataPost",
+      content_err: error,
+      created_at: converter(Date.now())
+    };
+    errorHandler(errData);
+  }
 };
 
 module.exports = {

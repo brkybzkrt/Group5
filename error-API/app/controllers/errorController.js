@@ -9,7 +9,7 @@ logErrors = async (req, res) => {
     .insertOne(log)
     .then((result) => {
       res.status(200).send(result);
-      console.log("succes");
+      console.log("success");
     })
     .catch((err) => {
       res.send(err);

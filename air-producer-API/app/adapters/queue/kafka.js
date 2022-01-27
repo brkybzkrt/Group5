@@ -6,7 +6,7 @@ async function createTopic() {
     // create kafka broker variable
     const kafka = new Kafka({
       clientID: "kafka_start",
-      brokers: ["192.168.1.2:9092"],
+      brokers: ["192.168.0.16:9092"],
     });
 
     // create kafka broker admin
